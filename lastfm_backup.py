@@ -3,6 +3,7 @@
 import json
 import urllib.request
 import os.path
+from sys import stdout, stderr
 
 __author__ = 'Alexander Popov'
 __version__ = '1.0.0'
@@ -11,39 +12,31 @@ __license__ = 'Unlicense'
 
 def get_pages(username, api_key):
     response = urllib.request.urlopen(
-           'http://ws.audioscrobbler.com/2.0/'
+           'https://ws.audioscrobbler.com/2.0/'
            '?method=user.getrecenttracks&user={0}&api_key={1}&format=json'
            '&limit=200'.format(username, api_key)).read().decode("utf8")
     pages = int(json.loads(response)['recenttracks']['@attr']['totalPages'])
+    return pages
 
-    return(pages)
-
-
+# http://www.last.fm/api/show/user.getRecentTracks
 def get_scrobbles(username, api_key, page):
     response = json.loads(urllib.request.urlopen(
                'http://ws.audioscrobbler.com/2.0/'
                '?method=user.getrecenttracks&user={0}&api_key={1}&format=json'
                '&limit=200&page={2}'.format(username, api_key, page)
                ).read().decode("utf8"))['recenttracks']['track']
-
-    return(response)
+    return response
 
 if __name__ == '__main__':
-    CFG = dict()
-
-    if os.path.exists('./config.json'):
-        with open('./config.json') as f:
-            CFG = json.loads(f.read())
-    else:
-        CFG['api_key'] = input('API Key: ')
-        CFG['username'] = input('Username: ')
-
-    PAGES = get_pages(CFG['username'], CFG['api_key'])
+    import config
+    username = config.USERNAME
+    api_key = config.API_KEY
+    total = get_pages(username, api_key)
     curPage = 1
     tracks = []
-    while curPage <= PAGES:
-        print('\r%d%%' % (curPage * 100 / PAGES), end='')
-        response = get_scrobbles(CFG['username'], CFG['api_key'], curPage)
+    while curPage <= total:
+        stderr.write('\rpage %d/%d %d%%' % (curPage, total, curPage * 100 / total))
+        response = get_scrobbles(username, api_key, curPage)
 
         for track in response:
             tracks.append({'artist': track['artist']['#text'],
@@ -53,9 +46,4 @@ if __name__ == '__main__':
 
         curPage += 1
 
-    with open('%s.json' % (CFG['username']), 'w+', encoding='utf-8') as f:
-        f.write(
-            json.dumps(tracks, indent=4, sort_keys=True, ensure_ascii=False))
-
-    print('\r{0} tracks saved in {1}.json!'.format(
-          len(tracks), CFG['username'],))
+    json.dump(tracks, stdout, indent=4, sort_keys=True, ensure_ascii=False)
