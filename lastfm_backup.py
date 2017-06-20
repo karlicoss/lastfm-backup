@@ -39,10 +39,17 @@ if __name__ == '__main__':
         response = get_scrobbles(username, api_key, curPage)
 
         for track in response:
-            tracks.append({'artist': track['artist']['#text'],
-                           'name': track['name'],
-                           'album': track['album']['#text'],
-                           'date': track['date']['uts']})
+            try:
+                tracks.append({'artist': track['artist']['#text'],
+                               'name': track['name'],
+                               'album': track['album']['#text'],
+                               'date': track['date']['uts']})
+            except Exception as e:
+                if 'nowplaying' in str(track):
+                    # OK, it has no date, whatever
+                    pass
+                else:
+                    raise e
 
         curPage += 1
 

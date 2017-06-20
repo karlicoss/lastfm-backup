@@ -1,2 +1,4 @@
 *.json
 *.pyc
+lastfm_secrets.py
+config.py
