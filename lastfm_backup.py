@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 
 import json
+import urllib.error
 import urllib.request
 import os.path
 from sys import stdout, stderr
+import logging
+
+import backoff
+
+from kython import setup_logzero
 
 __author__ = 'Alexander Popov'
 __version__ = '1.0.0'
@@ -19,6 +25,7 @@ def get_pages(username, api_key):
     return pages
 
 # http://www.last.fm/api/show/user.getRecentTracks
+@backoff.on_exception(backoff.expo, urllib.error.HTTPError, max_time=60 * 60) # 1 hr, whatever...
 def get_scrobbles(username, api_key, page):
     response = json.loads(urllib.request.urlopen(
                'http://ws.audioscrobbler.com/2.0/'
@@ -28,6 +35,8 @@ def get_scrobbles(username, api_key, page):
     return response
 
 if __name__ == '__main__':
+    setup_logzero(logging.getLogger('backoff'), level=logging.DEBUG)
+
     import config
     username = config.USERNAME
     api_key = config.API_KEY
