@@ -9,8 +9,6 @@ import logging
 
 import backoff
 
-from kython import setup_logzero
-
 __author__ = 'Alexander Popov'
 __version__ = '1.0.0'
 __license__ = 'Unlicense'
@@ -35,8 +33,6 @@ def get_scrobbles(username, api_key, page):
     return response
 
 if __name__ == '__main__':
-    setup_logzero(logging.getLogger('backoff'), level=logging.DEBUG)
-
     import config
     username = config.USERNAME
     api_key = config.API_KEY
@@ -58,6 +54,7 @@ if __name__ == '__main__':
                     # OK, it has no date, whatever
                     pass
                 else:
+                    logging.error('while processing %s', track)
                     raise e
 
         curPage += 1
